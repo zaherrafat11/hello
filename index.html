@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Billiard Timer</title>
+<style>
+    /* Your existing CSS styles */
+</style>
+</head>
+<body>
+<script>
+    let timers = [];
+
+    function startTimer(index) {
+        timers[index].startTime = new Date().getTime();
+        updateTimer(index);
+        document.getElementById('stop-btn' + index).disabled = false;
+    }
+
+    function stopTimer(index) {
+        clearInterval(timers[index].timerInterval);
+        calculateCost(index);
+        document.getElementById('stop-btn' + index).disabled = true;
+    }
+
+    function updateTimer(index) {
+        timers[index].timerInterval = setInterval(function() {
+            let elapsedTime = new Date().getTime() - timers[index].startTime;
+            let minutes = Math.floor(elapsedTime / (1000 * 60));
+            let seconds = Math.floor((elapsedTime / 1000) % 60); // Calculate elapsed seconds
+            document.getElementById('timer' + index).innerText = formatTime(minutes) + ":" + formatTime(seconds);
+        }, 1000);
+    }
+
+    function formatTime(time) {
+        return (time < 10 ? "0" : "") + time;
+    }
+
+    function calculateCost(index) {
+        let totalSeconds = Math.floor((new Date().getTime() - timers[index].startTime) / 1000);
+        let ratePerSecond = parseFloat(document.getElementById('price-select' + index).value);
+        let cost = totalSeconds * ratePerSecond;
+        document.getElementById('cost' + index).innerText = "Cost: $" + cost.toFixed(2);
+    }
+
+    function cleanAndStartOver(index) {
+        clearInterval(timers[index].timerInterval);
+        document.getElementById('timer' + index).innerText = "00:00";
+        document.getElementById('cost' + index).innerText = "Cost: $0.00";
+        document.getElementById('stop-btn' + index).disabled = true;
+    }
+
+    function addTimer() {
+        let index = timers.length;
+        timers.push({ startTime: 0, timerInterval: null });
+
+        let timerContainer = document.createElement('div');
+        timerContainer.classList.add('timer-container');
+        timerContainer.innerHTML = `
+            <div class="timer" id="timer${index}">00:00</div>
+            <select id="table-select${index}">
+                <option value="1">Table 1</option>
+                <!-- Add more options for tables if needed -->
+            </select>
+            <select id="price-select${index}">
+                <option value="0.00083">$0.05 per minute</option>
+                <option value="0.00117">$0.07 per minute</option>
+                <option value="0.00133">$0.08 per minute</option>
+            </select>
+            <br>
+            <button class="btn btn-start" onclick="startTimer(${index})">Start</button>
+            <button class="btn btn-stop" id="stop-btn${index}" onclick="stopTimer(${index})" disabled>Stop</button>
+            <button class="btn btn-clean" onclick="cleanAndStartOver(${index})">Clean</button>
+            <div class="cost" id="cost${index}">Cost: $0.00</div>
+        `;
+        document.body.appendChild(timerContainer);
+    }
+
+    // Additional code for time-limited access
+
+    // Generate a unique token
+    function generateToken() {
+        // Generate a random string as a token
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    }
+
+    // Store the token and its expiration date in localStorage
+    function storeToken(token) {
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + 30); // Set expiration date to one month from now
+        localStorage.setItem('token', token);
+        localStorage.setItem('expirationDate', expirationDate.getTime());
+    }
+
+    // Check if the token is still valid
+    function isTokenValid() {
+        const expirationDate = localStorage.getItem('expirationDate');
+        return expirationDate && parseInt(expirationDate) > Date.now();
+    }
+
+    window.addEventListener('load', function() {
+        // Check if the token is still valid
+        if (!isTokenValid()) {
+            alert('Your access has expired. Please request a new link.');
+            window.location.href = 'https://zaherrafat11.github.io/hello/'; // Redirect to a page where users can request a new link
+            return;
+        }
+
+        // Add timers
+        for (let i = 0; i < 16; i++) {
+            addTimer();
+        }
+    }); 
+</script>
+</body>
+</html>
